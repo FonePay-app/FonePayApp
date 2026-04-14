@@ -47,7 +47,10 @@ module.exports = async function handler(req, res) {
     return res.redirect(302, `${baseUrl}/success.html?installed=true&locationId=${encodeURIComponent(tokenData.locationId || '')}`);
 
   } catch (error) {
-    console.error('[OAuth Callback Error]', error?.response?.data || error.message);
-    return res.redirect(302, `${baseUrl}/failed.html?reason=token_exchange_failed`);
+    const errDetail = error?.response?.data || error.message;
+    console.error('[OAuth Callback Error]', JSON.stringify(errDetail));
+    // Return error detail in URL for debugging
+    const reason = encodeURIComponent(JSON.stringify(errDetail).substring(0, 100));
+    return res.redirect(302, `${baseUrl}/failed.html?reason=token_exchange_failed&detail=${reason}`);
   }
 };
