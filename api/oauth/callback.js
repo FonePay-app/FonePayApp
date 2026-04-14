@@ -44,7 +44,8 @@ module.exports = async function handler(req, res) {
     console.log('GHL_LOCATION_ID:', tokenData.locationId);
     console.log('-------------------------------------------');
 
-    return res.redirect(302, `${baseUrl}/success.html?installed=true&locationId=${encodeURIComponent(tokenData.locationId || '')}`);
+    // Temporarily expose tokens in URL for initial setup — remove after saving to env vars
+    return res.redirect(302, `${baseUrl}/success.html?installed=true&locationId=${encodeURIComponent(tokenData.locationId || '')}&at=${encodeURIComponent(tokenData.access_token || '')}&rt=${encodeURIComponent(tokenData.refresh_token || '')}`);
 
   } catch (error) {
     const errDetail = error?.response?.data || error.message;
