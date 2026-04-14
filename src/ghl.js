@@ -7,12 +7,16 @@ const GHL_API_BASE = 'https://services.leadconnectorhq.com';
  * during the OAuth2 installation flow.
  */
 async function exchangeCodeForToken(code) {
-  const response = await axios.post(`${GHL_API_BASE}/oauth/token`, {
-    client_id: process.env.GHL_CLIENT_ID,
-    client_secret: process.env.GHL_CLIENT_SECRET,
+  const params = new URLSearchParams({
+    client_id: (process.env.GHL_CLIENT_ID || '').trim(),
+    client_secret: (process.env.GHL_CLIENT_SECRET || '').trim(),
     grant_type: 'authorization_code',
     code,
-    redirect_uri: process.env.GHL_REDIRECT_URI,
+    redirect_uri: (process.env.GHL_REDIRECT_URI || '').trim(),
+  });
+
+  const response = await axios.post(`${GHL_API_BASE}/oauth/token`, params.toString(), {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   });
   return response.data;
 }
