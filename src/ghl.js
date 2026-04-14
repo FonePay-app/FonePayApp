@@ -74,4 +74,34 @@ function getGHLInstallURL() {
   return `https://marketplace.gohighlevel.com/oauth/chooselocation?${params.toString()}`;
 }
 
-module.exports = { exchangeCodeForToken, updateGHLTransaction, getGHLInstallURL };
+/**
+ * Registers FonePay as a custom payment provider in GHL.
+ * This is a one-time setup call per location.
+ *
+ * @param {string} accessToken  - GHL OAuth2 access token
+ * @param {string} locationId   - GHL sub-account ID
+ * @param {string} appBaseUrl   - Public base URL (e.g. https://fonepay-nepal.vercel.app)
+ */
+async function registerProvider(accessToken, locationId, appBaseUrl) {
+  const response = await axios.post(
+    `${GHL_API_BASE}/payments/custom-provider/config`,
+    {
+      name: 'FonePay',
+      description: 'FonePay payment gateway for Nepal',
+      imageUrl: 'https://fonepay.com/assets/img/fonepay-logo.png',
+      locationId,
+      queryUrl: `${appBaseUrl}/api/ghl/query`,
+      paymentsUrl: `${appBaseUrl}/checkout.html`,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        Version: '2021-07-28',
+      },
+    }
+  );
+  return response.data;
+}
+
+module.exports = { exchangeCodeForToken, updateGHLTransaction, getGHLInstallURL, registerProvider };

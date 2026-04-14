@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FonePay Checkout</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #f7f8fa;
+    }
+    .container { text-align: center; padding: 32px 24px; max-width: 340px; width: 100%; }
+    .logo { font-size: 28px; font-weight: 700; color: #e31837; letter-spacing: -0.5px; margin-bottom: 4px; }
+    .tagline { font-size: 13px; color: #888; margin-bottom: 24px; }
+    .divider { border: none; border-top: 1px solid #eee; margin-bottom: 24px; }
+    .amount-label { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+    .amount { font-size: 32px; font-weight: 700; color: #1a1a1a; margin: 4px 0 28px; }
+    .pay-btn {
+      background: #e31837;
+      color: #fff;
+      border: none;
+      padding: 14px 40px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      transition: opacity 0.2s;
+    }
+    .pay-btn:hover:not(:disabled) { opacity: 0.9; }
+    .pay-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .loading { color: #888; font-size: 14px; }
+    .error-msg { color: #e31837; font-size: 14px; }
+    .waiting { font-size: 13px; color: #666; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="loading" class="loading">Loading payment details...</div>
+
+    <div id="checkout" style="display:none">
+      <div class="logo">FonePay</div>
+      <div class="tagline">Secure Nepal Payment Gateway</div>
+      <hr class="divider" />
+      <div class="amount-label">Amount Due</div>
+      <div class="amount" id="amount-display">—</div>
+      <button class="pay-btn" id="pay-btn">Pay with FonePay</button>
+      <div class="waiting" id="waiting-msg" style="display:none">
+        Complete payment in the FonePay window...
+      </div>
+    </div>
+
+    <div id="error-view" style="display:none">
+      <div class="error-msg" id="error-msg">Something went wrong. Please try again.</div>
+    </div>
+  </div>
+
+  <script>
+    var paymentProps = null;
+
+    // Notify GHL that the iframe is ready to receive payment details
+    window.parent.postMessage({ type: 'custom_provider_ready' }, '*');
+
+    window.addEventListener('message', function (event) {
+      var data = event.data;
+      if (!data || !data.type) return;
+
+      // GHL sends payment details once checkout is ready
+      if (data.type === 'payment_initiate_props') {
+        paymentProps = data;
+        var amount = parseFloat(data.amount || 0).toFixed(2);
+        var currency = data.currency || 'NPR';
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('checkout').style.display = 'block';
+        document.getElementById('amount-display').textContent = currency + ' ' + amount;
+      }
+
+      // Popup sends back the FonePay result
+      if (data.type === 'fonepay_result') {
+        if (data.success) {
+          window.parent.postMessage({
+            type: 'custom_element_success_response',
+            chargeId: data.traceId || data.orderId || ''
+          }, '*');
+        } else {
+          window.parent.postMessage({
+            type: 'custom_element_failure_response',
+            message: data.reason || 'Payment failed or cancelled'
+          }, '*');
+        }
+      }
+    });
+
+    document.getElementById('pay-btn').addEventListener('click', async function () {
+      if (!paymentProps) return;
+
+      var btn = document.getElementById('pay-btn');
+      var waitingMsg = document.getElementById('waiting-msg');
+      btn.disabled = true;
+      btn.textContent = 'Redirecting...';
+
+      try {
+        var res = await fetch('/api/fonepay/url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: paymentProps.orderId || paymentProps.transactionId || ('order_' + Date.now()),
+            amount: paymentProps.amount,
+            description: 'Payment via FonePay',
+            email: paymentProps.email || 'N/A',
+            popup: true
+          })
+        });
+
+        var json = await res.json();
+        if (!json.url) throw new Error(json.error || 'No URL returned');
+
+        // Open FonePay in a popup window
+        var popup = window.open(json.url, 'fonepay_payment', 'width=620,height=720,left=100,top=80');
+
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+          // Popup blocked — redirect the whole parent frame as fallback
+          window.parent.location.href = json.url;
+          return;
+        }
+
+        btn.textContent = 'Waiting for payment...';
+        waitingMsg.style.display = 'block';
+
+      } catch (err) {
+        console.error('[checkout] Error:', err);
+        document.getElementById('checkout').style.display = 'none';
+        document.getElementById('error-view').style.display = 'block';
+        document.getElementById('error-msg').textContent = 'Failed to start payment. Please try again.';
+      }
+    });
+  </script>
+</body>
+</html>

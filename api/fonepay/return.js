@@ -66,7 +66,25 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // Redirect based on payment result
+    // Popup mode: send postMessage to checkout.html and close the window
+    if (params.popup === 'true') {
+      const resultJson = JSON.stringify({
+        type: 'fonepay_result',
+        success,
+        orderId,
+        traceId: params.UID || '',
+        reason: status,
+      });
+      return res.send(`<!DOCTYPE html><html><head><title>Payment</title></head><body>
+        <p>Payment ${success ? 'successful' : 'failed'}. Closing window...</p>
+        <script>
+          try { window.opener && window.opener.postMessage(${resultJson}, '*'); } catch(e) {}
+          window.close();
+        <\/script>
+      </body></html>`);
+    }
+
+    // Normal redirect mode
     if (success && status === 'successful') {
       return res.redirect(
         302,
