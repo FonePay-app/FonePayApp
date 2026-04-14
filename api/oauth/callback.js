@@ -1,15 +1,15 @@
 /**
  * GET /api/oauth/callback
  *
- * Endpoint OAuth2 de GoHighLevel.
- * GHL redirige aquí con ?code=xxx después de que el admin instala la app.
+ * GoHighLevel OAuth2 callback endpoint.
+ * GHL redirects here with ?code=xxx after the admin installs the app.
  *
- * Flujo:
- * 1. Admin instala la app desde GHL Marketplace
- * 2. GHL redirige a este endpoint con un código de autorización
- * 3. Intercambiamos el código por access_token + refresh_token
- * 4. Guardamos los tokens (en env vars por ahora — app privada)
- * 5. Redirigimos al admin a la página de configuración
+ * Flow:
+ * 1. Admin installs the app from GHL Marketplace
+ * 2. GHL redirects to this endpoint with an authorization code
+ * 3. Exchange the code for access_token + refresh_token
+ * 4. Store the tokens (in env vars for now — private app)
+ * 5. Redirect the admin to the success page
  */
 
 const { exchangeCodeForToken } = require('../../src/ghl');
@@ -22,9 +22,9 @@ module.exports = async function handler(req, res) {
   const { code, error: oauthError } = req.query;
   const baseUrl = process.env.APP_BASE_URL || `https://${req.headers.host}`;
 
-  // Error durante el OAuth2 (usuario rechazó, etc.)
+  // OAuth2 error (user denied access, etc.)
   if (oauthError) {
-    console.error('[GHL Install] OAuth error:', oauthError);
+    console.error('[OAuth Callback] OAuth error:', oauthError);
     return res.redirect(302, `${baseUrl}/failed.html?reason=ghl_auth_denied`);
   }
 
@@ -35,22 +35,19 @@ module.exports = async function handler(req, res) {
   try {
     const tokenData = await exchangeCodeForToken(code);
 
-    console.log('[GHL Install] Token received for locationId:', tokenData.locationId);
-    console.log('[GHL Install] Token type:', tokenData.token_type);
+    console.log('[OAuth Callback] Token received for locationId:', tokenData.locationId);
 
-    // Para la app privada, loguear los tokens para configurarlos en env vars
-    // En producción esto se guardaría en base de datos
-    console.log('--- GUARDAR ESTOS VALORES EN VERCEL ENV VARS ---');
+    // For a private app, log tokens so they can be added to Vercel env vars
+    console.log('--- ADD THESE VALUES TO VERCEL ENV VARS ---');
     console.log('GHL_ACCESS_TOKEN:', tokenData.access_token);
     console.log('GHL_REFRESH_TOKEN:', tokenData.refresh_token);
     console.log('GHL_LOCATION_ID:', tokenData.locationId);
-    console.log('------------------------------------------------');
+    console.log('-------------------------------------------');
 
-    // Redirigir a página de éxito de instalación
     return res.redirect(302, `${baseUrl}/success.html?installed=true&locationId=${encodeURIComponent(tokenData.locationId || '')}`);
 
   } catch (error) {
-    console.error('[GHL Install Error]', error?.response?.data || error.message);
+    console.error('[OAuth Callback Error]', error?.response?.data || error.message);
     return res.redirect(302, `${baseUrl}/failed.html?reason=token_exchange_failed`);
   }
 };

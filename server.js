@@ -1,11 +1,11 @@
 /**
- * Servidor local para probar las funciones antes de deploy en Vercel.
- * NO usar en producción — solo para desarrollo local.
+ * Local development server for testing Vercel functions before deploy.
+ * DO NOT use in production.
  *
- * Uso:
+ * Usage:
  *   node server.js
  *
- * Endpoints disponibles:
+ * Available endpoints:
  *   POST http://localhost:3000/api/fonepay/init
  *   GET  http://localhost:3000/api/fonepay/return
  *   GET  http://localhost:3000/api/oauth/callback
@@ -20,12 +20,11 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
-// Importar handlers
 const fonepayInit = require('./api/fonepay/init');
 const fonepayReturn = require('./api/fonepay/return');
 const oauthCallback = require('./api/oauth/callback');
 
-// Helper para parsear body JSON
+// Parse JSON request body
 function parseBody(req) {
   return new Promise((resolve) => {
     let body = '';
@@ -37,7 +36,7 @@ function parseBody(req) {
   });
 }
 
-// Mock del objeto res de Vercel
+// Mock Vercel res object
 function mockRes(res) {
   const mock = {
     _status: 200,
@@ -68,7 +67,6 @@ const server = http.createServer(async (req, res) => {
 
   console.log(`[${req.method}] ${pathname}`);
 
-  // Mock req con query params y body
   const mockReq = {
     method: req.method,
     headers: req.headers,
@@ -79,7 +77,6 @@ const server = http.createServer(async (req, res) => {
 
   const mockResponse = mockRes(res);
 
-  // Routing
   if (pathname === '/api/fonepay/init') {
     return fonepayInit(mockReq, mockResponse);
   }
@@ -92,7 +89,7 @@ const server = http.createServer(async (req, res) => {
     return oauthCallback(mockReq, mockResponse);
   }
 
-  // Servir archivos estáticos (success.html, failed.html)
+  // Serve static files
   if (pathname.endsWith('.html')) {
     const filePath = path.join(__dirname, 'public', path.basename(pathname));
     if (fs.existsSync(filePath)) {
@@ -101,15 +98,14 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // 404
   res.writeHead(404, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ error: 'Not found', path: pathname }));
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`\n✓ Servidor corriendo en http://localhost:${PORT}`);
-  console.log(`\nEndpoints disponibles:`);
+  console.log(`\nServer running at http://localhost:${PORT}`);
+  console.log(`\nAvailable endpoints:`);
   console.log(`  POST http://localhost:${PORT}/api/fonepay/init`);
   console.log(`  GET  http://localhost:${PORT}/api/fonepay/return`);
   console.log(`  GET  http://localhost:${PORT}/api/oauth/callback`);

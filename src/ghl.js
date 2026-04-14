@@ -3,8 +3,8 @@ const axios = require('axios');
 const GHL_API_BASE = 'https://services.leadconnectorhq.com';
 
 /**
- * Intercambia el authorization code por access_token + refresh_token
- * durante el proceso de instalación OAuth2.
+ * Exchanges the authorization code for access_token + refresh_token
+ * during the OAuth2 installation flow.
  */
 async function exchangeCodeForToken(code) {
   const response = await axios.post(`${GHL_API_BASE}/oauth/token`, {
@@ -18,13 +18,13 @@ async function exchangeCodeForToken(code) {
 }
 
 /**
- * Actualiza el estado de una transacción/orden en GHL.
- * Se llama después de verificar el pago en FonePay.
+ * Updates a transaction/order status in GHL.
+ * Called after verifying the payment result from FonePay.
  *
- * @param {string} accessToken  - Token OAuth2 de la cuenta GHL
- * @param {string} locationId   - ID de la sub-cuenta GHL
- * @param {string} orderId      - ID de la orden (PRN que enviamos a FonePay)
- * @param {object} paymentData  - Datos del pago retornados por FonePay
+ * @param {string} accessToken  - GHL OAuth2 access token
+ * @param {string} locationId   - GHL sub-account ID
+ * @param {string} orderId      - Order ID (PRN sent to FonePay)
+ * @param {object} paymentData  - Payment data returned by FonePay
  */
 async function updateGHLTransaction(accessToken, locationId, orderId, paymentData) {
   const { success, status, P_AMT, UID } = paymentData;
@@ -58,7 +58,7 @@ async function updateGHLTransaction(accessToken, locationId, orderId, paymentDat
 }
 
 /**
- * Genera la URL de autorización OAuth2 para instalar la app en GHL.
+ * Generates the OAuth2 authorization URL to install the app in GHL.
  */
 function getGHLInstallURL() {
   const params = new URLSearchParams({

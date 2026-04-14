@@ -1,24 +1,23 @@
 /**
  * POST /api/fonepay/init
  *
- * Inicia un pago en FonePay.
- * Recibe los datos de la orden, genera el DV hash (HMAC-SHA512)
- * y redirige al cliente al portal de pago de FonePay.
+ * Initiates a FonePay payment.
+ * Receives order data, generates the DV hash (HMAC-SHA512),
+ * and redirects the client to the FonePay payment portal.
  *
- * Body esperado:
+ * Expected body:
  * {
- *   orderId:     string  — ID único de la orden (se usa como PRN)
- *   amount:      number  — Monto en NPR
- *   description: string  — Descripción del pago (max 160 chars)
- *   email:       string  — Email del cliente (opcional)
- *   locationId:  string  — ID de la sub-cuenta GHL (opcional)
+ *   orderId:     string  — Unique order ID (used as PRN)
+ *   amount:      number  — Amount in NPR
+ *   description: string  — Payment description (max 160 chars)
+ *   email:       string  — Customer email (optional)
+ *   locationId:  string  — GHL sub-account ID (optional)
  * }
  */
 
 const { buildFonepayURL } = require('../../src/fonepay');
 
 module.exports = async function handler(req, res) {
-  // Solo aceptar POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -26,7 +25,7 @@ module.exports = async function handler(req, res) {
   try {
     const { orderId, amount, description, email, locationId } = req.body;
 
-    // Validaciones básicas
+    // Basic validation
     if (!orderId || !amount) {
       return res.status(400).json({ error: 'orderId and amount are required' });
     }
@@ -35,11 +34,11 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'amount must be a positive number' });
     }
 
-    // Return URL donde FonePay redirigirá después del pago
+    // Return URL where FonePay will redirect after payment
     const baseUrl = process.env.APP_BASE_URL || `https://${req.headers.host}`;
     const returnUrl = `${baseUrl}/api/fonepay/return`;
 
-    // Construir URL de FonePay con HMAC-SHA512
+    // Build FonePay URL with HMAC-SHA512
     const fonepayUrl = buildFonepayURL(
       {
         id: orderId,
@@ -55,10 +54,9 @@ module.exports = async function handler(req, res) {
       }
     );
 
-    // Log para debugging (remover en producción)
     console.log(`[FonePay Init] orderId=${orderId} amount=${amount} mode=${process.env.FONEPAY_MODE}`);
 
-    // Redirigir al portal de FonePay
+    // Redirect to FonePay portal
     res.redirect(302, fonepayUrl);
 
   } catch (error) {

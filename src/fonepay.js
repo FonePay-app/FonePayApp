@@ -6,8 +6,8 @@ const FONEPAY_URLS = {
 };
 
 /**
- * Genera el HMAC-SHA512 (DV) para el request de pago.
- * Orden exacto del documento FonePay v2.0:
+ * Generates the HMAC-SHA512 (DV) for the payment request.
+ * Exact field order per FonePay v2.0 spec:
  * PID,MD,PRN,AMT,CRN,DT,R1,R2,RU
  */
 function generateRequestDV(params, secretKey) {
@@ -30,8 +30,8 @@ function generateRequestDV(params, secretKey) {
 }
 
 /**
- * Verifica el HMAC-SHA512 (DV) del callback de FonePay.
- * Orden exacto del documento FonePay v2.0:
+ * Verifies the HMAC-SHA512 (DV) from the FonePay callback.
+ * Exact field order per FonePay v2.0 spec:
  * PRN,PID,PS,RC,UID,BC,INI,P_AMT,R_AMT
  */
 function verifyResponseDV(callbackParams, secretKey) {
@@ -52,9 +52,9 @@ function verifyResponseDV(callbackParams, secretKey) {
 }
 
 /**
- * Construye la URL completa de redirect a FonePay.
- * IMPORTANTE: valores NO deben ser URL-encoded al calcular DV,
- * pero SÍ al construir la URL GET (URLSearchParams lo hace automático).
+ * Builds the full redirect URL to FonePay.
+ * NOTE: values must NOT be URL-encoded when calculating DV,
+ * but they ARE encoded in the GET URL (URLSearchParams handles this automatically).
  */
 function buildFonepayURL(order, returnUrl, config) {
   const mode = config.mode || process.env.FONEPAY_MODE || 'test';
@@ -78,7 +78,7 @@ function buildFonepayURL(order, returnUrl, config) {
     RU: returnUrl,
   };
 
-  // Generar DV con valores sin URL-encode
+  // Generate DV using raw (non-URL-encoded) values
   params.DV = generateRequestDV(params, secretKey);
 
   const baseUrl = FONEPAY_URLS[mode] || FONEPAY_URLS.test;

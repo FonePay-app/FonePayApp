@@ -1,13 +1,13 @@
 /**
  * GET /api/fonepay/return
  *
- * Return URL — FonePay redirige aquí después del pago.
- * 1. Recibe los parámetros de FonePay via query string
- * 2. Verifica el DV hash para confirmar autenticidad
- * 3. Actualiza GHL con el estado del pago
- * 4. Redirige al cliente a la página de éxito o fallo
+ * Return URL — FonePay redirects here after payment.
+ * 1. Receives FonePay parameters via query string
+ * 2. Verifies the DV hash to confirm authenticity
+ * 3. Updates GHL with the payment status
+ * 4. Redirects the client to the success or failure page
  *
- * Parámetros recibidos de FonePay:
+ * Parameters received from FonePay:
  * PRN, PID, PS, RC, DV, UID, BC, INI, P_AMT, R_AMT
  */
 
@@ -25,7 +25,7 @@ module.exports = async function handler(req, res) {
   console.log('[FonePay Return] Received:', JSON.stringify(params));
 
   try {
-    // Verificar que llegaron los parámetros mínimos
+    // Verify required parameters are present
     const required = ['PRN', 'PID', 'PS', 'RC', 'DV'];
     for (const field of required) {
       if (!params[field]) {
@@ -34,7 +34,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // Verificar el DV hash — confirma que la respuesta es auténtica de FonePay
+    // Verify DV hash — confirms the response is authentic from FonePay
     const verification = verifyResponseDV(params, process.env.FONEPAY_SECRET);
 
     if (!verification.valid) {
@@ -47,9 +47,7 @@ module.exports = async function handler(req, res) {
 
     console.log(`[FonePay Return] orderId=${orderId} success=${success} status=${status} P_AMT=${params.P_AMT}`);
 
-    // Actualizar GHL si hay token disponible
-    // Los tokens GHL se guardan durante la instalación OAuth2
-    // Por ahora: log del resultado (se conecta con GHL en Fase 2)
+    // Update GHL if tokens are available
     const ghlAccessToken = process.env.GHL_ACCESS_TOKEN;
     const ghlLocationId = process.env.GHL_LOCATION_ID;
 
@@ -63,12 +61,12 @@ module.exports = async function handler(req, res) {
         });
         console.log(`[FonePay Return] GHL updated for order ${orderId}`);
       } catch (ghlError) {
-        // No bloquear al usuario si GHL falla
+        // Do not block the user if GHL update fails
         console.error('[FonePay Return] GHL update failed:', ghlError.message);
       }
     }
 
-    // Redirigir según resultado del pago
+    // Redirect based on payment result
     if (success && status === 'successful') {
       return res.redirect(
         302,
