@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment Failed — FonePay</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #fff5f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 48px 40px;
+      text-align: center;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    .icon {
+      width: 72px;
+      height: 72px;
+      background: #ef4444;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+    .icon svg { width: 36px; height: 36px; fill: white; }
+    h1 { font-size: 24px; color: #991b1b; margin-bottom: 8px; }
+    p { color: #6b7280; font-size: 15px; margin-bottom: 24px; }
+    .detail {
+      background: #fff5f5;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .detail-row:last-child { margin-bottom: 0; }
+    .detail-label { color: #6b7280; }
+    .detail-value { color: #111827; font-weight: 500; }
+    .badge {
+      display: inline-block;
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .reasons {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+    .reasons h3 { font-size: 13px; color: #374151; margin-bottom: 8px; }
+    .reasons ul { padding-left: 16px; }
+    .reasons li { font-size: 13px; color: #6b7280; margin-bottom: 4px; }
+    .fonepay-logo {
+      margin-top: 24px;
+      color: #9ca3af;
+      font-size: 12px;
+    }
+    .fonepay-logo strong { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">
+      <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+    </div>
+    <h1 id="title">Payment Failed</h1>
+    <p id="subtitle">Your payment could not be completed. Please try again.</p>
+
+    <div class="detail" id="details">
+      <div class="detail-row" id="row-order" style="display:none">
+        <span class="detail-label">Order ID</span>
+        <span class="detail-value" id="orderId"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Status</span>
+        <span class="badge" id="statusBadge">Failed</span>
+      </div>
+    </div>
+
+    <div class="reasons">
+      <h3>Possible reasons:</h3>
+      <ul>
+        <li>Insufficient balance in your account</li>
+        <li>Payment was cancelled</li>
+        <li>Bank transaction limit reached</li>
+        <li>Network or connection issue</li>
+      </ul>
+    </div>
+
+    <div class="fonepay-logo">Powered by <strong>fone</strong>pay</div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('orderId');
+    const reason = params.get('reason');
+
+    if (orderId) {
+      document.getElementById('orderId').textContent = orderId;
+      document.getElementById('row-order').style.display = 'flex';
+    }
+
+    const reasonMessages = {
+      cancel: { title: 'Payment Cancelled', subtitle: 'You cancelled the payment. You can try again anytime.', badge: 'Cancelled' },
+      failed: { title: 'Payment Failed', subtitle: 'The payment could not be processed. Please try again.', badge: 'Failed' },
+      invalid_signature: { title: 'Security Error', subtitle: 'Payment verification failed. Please contact support.', badge: 'Security Error' },
+      missing_params: { title: 'Payment Error', subtitle: 'Invalid payment response received.', badge: 'Error' },
+      server_error: { title: 'Server Error', subtitle: 'A server error occurred. Please try again later.', badge: 'Server Error' },
+      ghl_auth_denied: { title: 'Installation Cancelled', subtitle: 'GoHighLevel authorization was denied.', badge: 'Cancelled' },
+    };
+
+    if (reason && reasonMessages[reason]) {
+      const msg = reasonMessages[reason];
+      document.getElementById('title').textContent = msg.title;
+      document.getElementById('subtitle').textContent = msg.subtitle;
+      document.getElementById('statusBadge').textContent = msg.badge;
+    }
+  </script>
+</body>
+</html>
