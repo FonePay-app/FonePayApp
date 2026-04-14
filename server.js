@@ -22,7 +22,10 @@ const url = require('url');
 
 const fonepayInit = require('./api/fonepay/init');
 const fonepayReturn = require('./api/fonepay/return');
+const fonepayUrl = require('./api/fonepay/url');
 const oauthCallback = require('./api/oauth/callback');
+const ghlQuery = require('./api/ghl/query');
+const ghlSetup = require('./api/ghl/setup');
 
 // Parse JSON request body
 function parseBody(req) {
@@ -87,6 +90,18 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/api/oauth/callback') {
     return oauthCallback(mockReq, mockResponse);
+  }
+
+  if (pathname === '/api/fonepay/url') {
+    return fonepayUrl(mockReq, mockResponse);
+  }
+
+  if (pathname === '/api/ghl/query') {
+    return ghlQuery(mockReq, mockResponse);
+  }
+
+  if (pathname === '/api/ghl/setup') {
+    return ghlSetup(mockReq, mockResponse);
   }
 
   // Serve static files
