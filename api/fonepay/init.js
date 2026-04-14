@@ -35,7 +35,7 @@ module.exports = async function handler(req, res) {
     }
 
     // Return URL where FonePay will redirect after payment
-    const baseUrl = process.env.APP_BASE_URL || `https://${req.headers.host}`;
+    const baseUrl = (process.env.APP_BASE_URL || `https://${req.headers.host}`).trim();
     const returnUrl = `${baseUrl}/api/fonepay/return`;
 
     // Build FonePay URL with HMAC-SHA512

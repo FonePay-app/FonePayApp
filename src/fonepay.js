@@ -57,9 +57,9 @@ function verifyResponseDV(callbackParams, secretKey) {
  * but they ARE encoded in the GET URL (URLSearchParams handles this automatically).
  */
 function buildFonepayURL(order, returnUrl, config) {
-  const mode = config.mode || process.env.FONEPAY_MODE || 'test';
-  const pid = config.pid || process.env.FONEPAY_PID;
-  const secretKey = config.secretKey || process.env.FONEPAY_SECRET;
+  const mode = (config.mode || process.env.FONEPAY_MODE || 'test').trim();
+  const pid = (config.pid || process.env.FONEPAY_PID || '').trim();
+  const secretKey = (config.secretKey || process.env.FONEPAY_SECRET || '').trim();
 
   const now = new Date();
   const month = String(now.getMonth() + 1).padStart(2, '0');
